@@ -5,27 +5,47 @@ import {readFileSync, writeFileSync} from 'fs'
 import contentful from 'contentful-management'
 
 const TEMPLATE = readFileSync(`${__dirname}/template.js`).toString()
-const MIGRATIONS_ID = '__migrations'
+export const MIGRATIONS_ID = '__migrations'
+export const DEFAULT_LOCALE = 'en-US'
+
+// TODO: terminology, define the difference b/w a migration and a revision
 
 export const getClient = accessToken => contentful.createClient({accessToken})
-export const getSpace = (spaceId, accessToken) =>
+export const getSpace = (spaceId, accessToken) => 
     getClient(accessToken).getSpace(spaceId)
 
 export class Migrator {
-    constructor (space, path) {
+    constructor (space, dir) {
         this.space = space
-        this.path = path
-        this.spaceHead = getSpaceHead(space)
-        this.migrations = loadRevisionChain(path)
+        this.dir = dir
+        this.migrations = loadRevisionChain(dir)
     }
     loadRevision(id) {
-        // readFileSync(`${path}/${id}`)
+        const migration = this.migrations.find(v => v.id === id)
+        if (!migration) throw new Error('Migration not found')
+
+        return require(migration.path)
+    }
+    updateRemoteHead (ref) {
+        return space.createEntry(MIGRATIONS_ID, {ref})
     }
     // Upgrade to and including
-    upgrade (revision) {
-
+    // TODO: how do you handle a migration failing half way?
+    async upgrade (toRevisionId) {
+        let remoteHead = getSpaceHead(space)
+        const fromRevision = this.getMigration(remoteHead)
+        let revision = this.getMigration(fromRevision.revised_by)
+        let isDone = false
+        while (isDone) {
+            await revision.up(this.space)
+            const nextRevision = this.getMigration(migration.revised_by)
+            isDone = !nextRevision || revision.id === toRevisionId
+        }
     }
     downgrade (revision) {
+    }
+    getMigration (id) {
+        return this.migrations.find(v => v.id === id) || null
     }
 }
 
@@ -43,13 +63,15 @@ export async function paginate(fn, query = {}) {
 }
 
 export async function getSpaceHead(space) {
-    const page = space.getEntries({
+    const page = await space.getEntries({
         content_type: MIGRATIONS_ID,
         order: '-sys.createdAt',
         limit: 1
     })
     const items = (page.items || [])
-    return items[0] || null
+    return items.length ?
+        items[0].fields.ref[DEFAULT_LOCALE] :
+        null
 }
 
 export async function getMigrations (space) {

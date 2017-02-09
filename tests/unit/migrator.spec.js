@@ -8,7 +8,7 @@ import {ls, cp, rm} from '../../src/util'
 import {tmpdir} from 'os'
 import fs from 'fs'
 
-const FIXTURE_PATH = `${__dirname}/fixtures`
+const FIXTURE_PATH = `${__dirname}/../fixtures`
 const TEMPLATE = fs.readFileSync(`${__dirname}/../../src/template.js`).toString()
 
 let migrationsPath = null
