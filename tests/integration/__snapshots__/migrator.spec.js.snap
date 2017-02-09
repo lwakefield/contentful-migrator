@@ -44,20 +44,3 @@ Array [
   },
 ]
 `;
-
-exports[`Migrator runs an upgrade with two migrations 1`] = `"testContentType"`;
-
-exports[`Migrator runs an upgrade with two migrations 2`] = `
-Array [
-  Object {
-    "disabled": false,
-    "id": "testField",
-    "localized": false,
-    "name": "testField",
-    "omitted": false,
-    "required": false,
-    "type": "Symbol",
-    "validations": Array [],
-  },
-]
-`;

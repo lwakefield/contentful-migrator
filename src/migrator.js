@@ -31,26 +31,32 @@ export class Migrator {
 
         for (let i = firstIndex + 1; i <= lastIndex; i++) {
             const id = this.migrations[i].id
+            info(`running upgrade: ${id}`)
             const migration = this.loadMigration(id)
-            console.log(`running upgrade: ${id}`)
             await migration.up(this.space)
-            await this.updateRemoteHead(id)
-        }
+            await this.space.createEntry(
+                MIGRATIONS_ID,
+                {fields: {ref: {[DEFAULT_LOCALE]: id}}}
+            )}
     }
 
     async downgradeTo (revisionId) {
-        const remoteHead = await getSpaceHead(this.space)
-        if (!remoteHead) throw new Error('Could not get the remote head')
+        const migrationHistory = await getMigrationHistory(this.space)
+        const getId = entry => entry.fields.ref[DEFAULT_LOCALE]
 
-        const firstIndex = this.getMigrationIndex(remoteHead)
+        let head = migrationHistory[0]
+
+        const firstIndex = this.getMigrationIndex(getId(head))
         const lastIndex = this.getMigrationIndex(revisionId) || 0
 
         for (let i = firstIndex; i >= lastIndex; i--) {
             const id = this.migrations[i].id
+            info(`running downgrade: ${id}`)
             const migration = this.loadMigration(id)
-            console.log(`running downgrade: ${id}`)
             await migration.down(this.space)
-            await this.updateRemoteHead(id)
+
+            head = migrationHistory.shift()
+            await head.delete()
         }
     }
 
@@ -61,19 +67,13 @@ export class Migrator {
         return require(migration.path)
     }
 
-    updateRemoteHead (id) {
-        return this.space.createEntry(
-            MIGRATIONS_ID,
-            {fields: {ref: {[DEFAULT_LOCALE]: id}}}
-        )
-    }
-
     getMigration (id) {
         return this.migrations.find(v => v.id === id) || null
     }
 
     getMigrationIndex (id) {
-        return this.migrations.findIndex(v => v.id === id) || null
+        const index = this.migrations.findIndex(v => v.id === id)
+        return index !== -1 ? index : null
     }
 }
 
@@ -88,6 +88,13 @@ export async function paginate(fn, query = {}) {
         isDone = !items.length
     }
     return entries
+}
+
+export async function getMigrationHistory(space) {
+    return await paginate(
+        space.getEntries,
+        {content_type: MIGRATIONS_ID, order: '-sys.createdAt'}
+    )
 }
 
 export async function getSpaceHead(space) {

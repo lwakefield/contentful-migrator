@@ -1,4 +1,5 @@
 require('dotenv').config()
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
 import {
     MIGRATIONS_ID,
@@ -72,6 +73,8 @@ describe('Migrator', () => {
 
         // TODO we need some real assertions in here...
         await migrator.upgradeTo(migration)
+
+        await new Promise(res => setTimeout(res, 2000))
 
         await migrator.downgradeTo()
     })
