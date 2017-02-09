@@ -1,25 +1,7 @@
 import {ls, randStr} from './util'
 import {readFileSync, writeFileSync} from 'fs'
 
-const TEMPLATE = (
-`
-/**
- * revised_by: null
- * id: <ID>
- * revises: <REVISES>
- */
-
-function up (space) {
-
-}
-
-function down (space) {
-
-}
-
-module.exports = {up, down}
-`
-)
+const TEMPLATE = readFileSync(`${__dirname}/template.js`).toString()
 
 export function createMigration (path, name = '') {
     const revisionChain = loadRevisionChain(path)
@@ -30,9 +12,11 @@ export function createMigration (path, name = '') {
         .replace('<REVISES>', revisesId)
 
     const filename = name ?
-        `${id}_${name}.js` :
-        `${id}.js`
-    writeFileSync(`${path}/${filename}`, src)
+        `${path}/${id}_${name}.js` :
+        `${path}/${id}.js`
+
+    writeFileSync(filename, src)
+    return filename
 }
 
 export function loadRevisionChain (path) {

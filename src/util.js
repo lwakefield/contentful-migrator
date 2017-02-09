@@ -3,7 +3,11 @@ const crypto = require('crypto')
 
 export const ls = path => execSync(`ls ${path}`).toString()
     .split('\n').filter(v => !!v)
-export const randStr = len => crypto.randomBytes(len).toString('hex')
+export const cp = (from, to, args = '') =>
+    execSync(`cp ${args} ${from} ${to} `)
+export const rm = (path, args = '') =>
+    execSync(`rm ${args} ${path}`)
+export const randStr = len => crypto.randomBytes(len / 2).toString('hex')
 
 // function createMigration (name) {
 //     const id = randStr(8)
