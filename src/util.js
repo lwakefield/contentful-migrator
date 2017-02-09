@@ -1,5 +1,6 @@
 const {execSync} = require('child_process')
 const crypto = require('crypto')
+import colors from 'colors/safe'
 
 export const ls = path => execSync(`ls ${path}`).toString()
     .split('\n').filter(v => !!v)
@@ -9,26 +10,18 @@ export const rm = (path, args = '') =>
     execSync(`rm ${args} ${path}`)
 export const randStr = len => crypto.randomBytes(len / 2).toString('hex')
 
-// function createMigration (name) {
-//     const id = randStr(8)
-//     const template = (
-// `
-// /*
-//  * revised_by: ${}
-//  * id: ${id}
-//  * revises: ${}
-//  */
+export function log(str, level = 'info') {
+    const tags = {
+        info: colors.blue('[INFO]'),
+        debug: colors.blue('[DEBUG]'),
+        error: colors.blue('[ERROR]')
+    }
+    const tag = tags[level]
+    if (!tag) throw new Error(`Invalid log level: ${level}`)
 
-// function up (space) {
+    process.env.DEBUG && console.log(`${tag}: ${str}`)
+}
 
-// }
-// function down (space) {
-// }
-// `
-//     )
-// }
-
-// const randStr (len) => crypto.randomBytes(len).toString('hex')
-
-// module.exports = createMigration
-
+export const info = str => log(str, 'info')
+export const debug = str => log(str, 'debug')
+export const error = str => log(str, 'error')
