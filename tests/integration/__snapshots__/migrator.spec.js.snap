@@ -28,9 +28,26 @@ Object {
 }
 `;
 
-exports[`Migrator migrations loaded runs up correctly 1`] = `"testContentType"`;
+exports[`Migrator migrations loaded runs up and down correctly 1`] = `"testContentType"`;
 
-exports[`Migrator migrations loaded runs up correctly 2`] = `
+exports[`Migrator migrations loaded runs up and down correctly 2`] = `
+Array [
+  Object {
+    "disabled": false,
+    "id": "testField",
+    "localized": false,
+    "name": "testField",
+    "omitted": false,
+    "required": false,
+    "type": "Symbol",
+    "validations": Array [],
+  },
+]
+`;
+
+exports[`Migrator runs an upgrade with two migrations 1`] = `"testContentType"`;
+
+exports[`Migrator runs an upgrade with two migrations 2`] = `
 Array [
   Object {
     "disabled": false,

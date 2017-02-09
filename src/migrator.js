@@ -20,32 +20,60 @@ export class Migrator {
         this.dir = dir
         this.migrations = loadRevisionChain(dir)
     }
+
+    // Upgrade to and including
+    // TODO: how do you handle a migration failing half way?
+    async upgradeTo(revisionId) {
+        const remoteHead = getSpaceHead(this.space)
+        const firstIndex = this.getMigrationIndex(remoteHead) || -1
+        const lastIndex = this.getMigrationIndex(revisionId) ||
+            this.migrations.length - 1
+
+        for (let i = firstIndex + 1; i <= lastIndex; i++) {
+            const id = this.migrations[i].id
+            const migration = this.loadMigration(id)
+            console.log(`running upgrade: ${id}`)
+            await migration.up(this.space)
+            await this.updateRemoteHead(id)
+        }
+    }
+
+    async downgradeTo (revisionId) {
+        const remoteHead = await getSpaceHead(this.space)
+        if (!remoteHead) throw new Error('Could not get the remote head')
+
+        const firstIndex = this.getMigrationIndex(remoteHead)
+        const lastIndex = this.getMigrationIndex(revisionId) || 0
+
+        for (let i = firstIndex; i >= lastIndex; i--) {
+            const id = this.migrations[i].id
+            const migration = this.loadMigration(id)
+            console.log(`running downgrade: ${id}`)
+            await migration.down(this.space)
+            await this.updateRemoteHead(id)
+        }
+    }
+
     loadMigration(id) {
         const migration = this.migrations.find(v => v.id === id)
         if (!migration) throw new Error('Migration not found')
 
         return require(migration.path)
     }
-    updateRemoteHead (ref) {
-        return space.createEntry(MIGRATIONS_ID, {ref})
+
+    updateRemoteHead (id) {
+        return this.space.createEntry(
+            MIGRATIONS_ID,
+            {fields: {ref: {[DEFAULT_LOCALE]: id}}}
+        )
     }
-    // Upgrade to and including
-    // TODO: how do you handle a migration failing half way?
-    async upgrade (toRevisionId) {
-        let remoteHead = getSpaceHead(space)
-        const fromRevision = this.getMigration(remoteHead)
-        let revision = this.getMigration(fromRevision.revised_by)
-        let isDone = false
-        while (isDone) {
-            await revision.up(this.space)
-            const nextRevision = this.loadMigration(migration.revised_by)
-            isDone = !nextRevision || revision.id === toRevisionId
-        }
-    }
-    downgrade (revision) {
-    }
+
     getMigration (id) {
         return this.migrations.find(v => v.id === id) || null
+    }
+
+    getMigrationIndex (id) {
+        return this.migrations.findIndex(v => v.id === id) || null
     }
 }
 
