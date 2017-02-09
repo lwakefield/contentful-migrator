@@ -11,7 +11,7 @@ export const DEFAULT_LOCALE = 'en-US'
 // TODO: terminology, define the difference b/w a migration and a revision
 
 export const getClient = accessToken => contentful.createClient({accessToken})
-export const getSpace = (spaceId, accessToken) => 
+export const getSpace = (spaceId, accessToken) =>
     getClient(accessToken).getSpace(spaceId)
 
 export class Migrator {
@@ -20,7 +20,7 @@ export class Migrator {
         this.dir = dir
         this.migrations = loadRevisionChain(dir)
     }
-    loadRevision(id) {
+    loadMigration(id) {
         const migration = this.migrations.find(v => v.id === id)
         if (!migration) throw new Error('Migration not found')
 
@@ -38,7 +38,7 @@ export class Migrator {
         let isDone = false
         while (isDone) {
             await revision.up(this.space)
-            const nextRevision = this.getMigration(migration.revised_by)
+            const nextRevision = this.loadMigration(migration.revised_by)
             isDone = !nextRevision || revision.id === toRevisionId
         }
     }

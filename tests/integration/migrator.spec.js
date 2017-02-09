@@ -2,9 +2,11 @@ require('dotenv').config()
 
 import {
     MIGRATIONS_ID,
+    DEFAULT_LOCALE,
     getSpace,
     getSpaceHead,
-    paginate
+    paginate,
+    Migrator
 } from '../../src/migrator'
 import {ls, cp, rm} from '../../src/util'
 import {tmpdir} from 'os'
@@ -14,21 +16,28 @@ const FIXTURE_PATH = `${__dirname}/../fixtures`
 const TEMPLATE = fs.readFileSync(`${__dirname}/../../src/template.js`).toString()
 
 let space
+async function reset() {
+    const entries = await paginate(space.getEntries)
+    return new Promise((res, rej) => {
+        entries.forEach(async entry => {
+            if (entry.isPublished()) {
+                entry = await entry.unpublish()
+                await entry.delete()
+            } else {
+                await entry.delete()
+            }
+        })
+        res()
+    })
+}
 beforeAll(async () => {
     space = await getSpace(
         process.env.CONTENTFUL_SPACE_ID,
         process.env.CONTENTFUL_ACCESS_TOKEN
     )
-    const entries = await paginate(space.getEntries)
-    entries.forEach(async entry => {
-        if (entry.isPublished()) {
-            entry = await entry.unpublish()
-            await entry.delete()
-        } else {
-            await entry.delete()
-        }
-    })
+    // await reset()
 })
+// afterAll(async () => await reset())
 
 // let migrationsPath = null
 // beforeEach(() => {
@@ -50,11 +59,39 @@ test('getSpace', async () => {
 
 test('getSpaceHead', async () => {
     const headEntry = await space.createEntry(MIGRATIONS_ID, {
-        fields: {ref: {'en-US': 'abc123'}}
+        fields: {ref: {[DEFAULT_LOCALE]: 'abc123'}}
     })
     expect(headEntry).toBeTruthy()
     const head = await getSpaceHead(space)
     expect(head).toEqual('abc123')
+    await headEntry.delete()
+})
+
+describe('Migrator', () => {
+    it('instantiates correctly', () => {
+        const migrator = new Migrator(space, FIXTURE_PATH)
+        expect(migrator).toBeTruthy()
+        expect(migrator.migrations).toMatchSnapshot()
+    })
+    it('loads migrations', () => {
+        const migrator = new Migrator(space, FIXTURE_PATH)
+        const firstMigration = migrator.migrations[0]
+        const migration = migrator.loadMigration(firstMigration.id)
+        expect(migration).toMatchSnapshot()
+    })
+    it('migrations loaded runs up correctly', async () => {
+        const migrator = new Migrator(space, FIXTURE_PATH)
+        const firstMigration = migrator.migrations[0]
+        const migration = migrator.loadMigration(firstMigration.id)
+
+        const up = await migration.up(space)
+        expect(up.sys).toBeTruthy()
+        expect(up.name).toMatchSnapshot()
+        expect(up.fields).toMatchSnapshot()
+
+        const down = await migration.down(space)
+        expect(down).toEqual(undefined)
+    })
 })
 
 // // 907230f7c -> 55da42387 -> c401e90d5

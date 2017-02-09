@@ -1,0 +1,46 @@
+exports[`Migrator instantiates correctly 1`] = `
+Array [
+  Object {
+    "id": "907230f7c",
+    "path": "/Users/lawrence/projects/contentful-migrator/tests/integration/../fixtures/907230f7c.js",
+    "revised_by": "55da42387",
+    "revises": null,
+  },
+  Object {
+    "id": "55da42387",
+    "path": "/Users/lawrence/projects/contentful-migrator/tests/integration/../fixtures/55da42387.js",
+    "revised_by": "c401e90d5",
+    "revises": "907230f7c",
+  },
+  Object {
+    "id": "c401e90d5",
+    "path": "/Users/lawrence/projects/contentful-migrator/tests/integration/../fixtures/c401e90d5.js",
+    "revised_by": null,
+    "revises": "55da42387",
+  },
+]
+`;
+
+exports[`Migrator loads migrations 1`] = `
+Object {
+  "down": [Function],
+  "up": [Function],
+}
+`;
+
+exports[`Migrator migrations loaded runs up correctly 1`] = `"testContentType"`;
+
+exports[`Migrator migrations loaded runs up correctly 2`] = `
+Array [
+  Object {
+    "disabled": false,
+    "id": "testField",
+    "localized": false,
+    "name": "testField",
+    "omitted": false,
+    "required": false,
+    "type": "Symbol",
+    "validations": Array [],
+  },
+]
+`;
