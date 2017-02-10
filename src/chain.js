@@ -1,7 +1,6 @@
 import {ls, arrayToObj, randStr} from './util'
 import {readFileSync, writeFileSync} from 'fs'
-
-const TEMPLATE = readFileSync(`${__dirname}/template.js`).toString()
+import {TEMPLATE_STR} from './constants'
 
 export default class MigrationChain {
     constructor (dir) {
@@ -43,7 +42,7 @@ export default class MigrationChain {
             `${this.dir}/${id}_${name}.js` :
             `${this.dir}/${id}.js`
 
-        const src = TEMPLATE
+        const src = TEMPLATE_STR
             .replace('<ID>', id)
             .replace('<REVISES>', headId)
 

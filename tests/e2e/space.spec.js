@@ -7,7 +7,7 @@ import fs from 'fs'
 import contentful from 'contentful-management'
 
 import Space from '../../src/space'
-import {spy, unspy} from '../util'
+import {spy, unspy, cleanSpace} from '../util'
 
 let SPACE
 let SPACE_ID
@@ -15,12 +15,8 @@ beforeAll(async () => {
     const client = contentful.createClient(
         {accessToken: process.env.CONTENTFUL_ACCESS_TOKEN}
     )
-    SPACE = await client.createSpace({name: randStr(8)})
-    SPACE_ID = SPACE.sys.id
-})
-
-afterAll(async () => {
-    await SPACE.delete()
+    SPACE = await client.getSpace(process.env.CONTENTFUL_SPACE_ID)
+    SPACE_ID = process.env.CONTENTFUL_SPACE_ID
 })
 
 describe('Space', () => {
@@ -46,5 +42,7 @@ describe('Space', () => {
         expect(space.space).toBeTruthy()
 
         unspy(Space.prototype, ['loadMigrationHistory', 'initSpace'])
+
+        await cleanSpace(SPACE)
     })
 })

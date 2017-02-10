@@ -1,5 +1,5 @@
-const {execSync} = require('child_process')
-const crypto = require('crypto')
+import {execSync} from 'child_process'
+import {randomBytes} from 'crypto'
 import colors from 'colors/safe'
 
 export const ls = path => execSync(`ls ${path}`).toString()
