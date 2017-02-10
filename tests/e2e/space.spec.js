@@ -1,7 +1,12 @@
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
 
 import Space from '../../src/space'
-import {spy, unspy, setupSpace, cleanSpace, sleep} from '../util'
+import {
+    spy,
+    unspy,
+    setupSpace,
+    cleanSpace
+} from '../util'
 
 let SPACE
 let SPACE_ID

@@ -1,10 +1,7 @@
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
 
 import Migrator from '../../src/migrator'
-import {enumerate} from '../../src/space'
-import {error} from '../../src/util'
 import {
-    sleep,
     cleanSpace,
     setupSpace
 } from '../util'

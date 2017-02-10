@@ -1,11 +1,9 @@
-import {ls, cp, rm} from '../../src/util'
 import {tmpdir} from 'os'
-import {mkdirSync, readFileSync} from 'fs'
-import fs from 'fs'
+import {mkdirSync} from 'fs'
 
+import {cp, rm} from '../../src/util'
 import Chain from '../../src/chain'
 
-const TEMPLATE = readFileSync(`${__dirname}/../../src/template.js`).toString()
 const MIGRATIONS_DIR = `${tmpdir()}/migrator`
 
 beforeAll(() => {

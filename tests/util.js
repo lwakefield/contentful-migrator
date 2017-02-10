@@ -1,8 +1,7 @@
 require('dotenv').config()
-import {readFileSync, writeFileSync} from 'fs'
 import contentful from 'contentful-management'
 
-import {info} from '../src/util'
+import {info, error} from '../src/util'
 import {enumerate} from '../src/space'
 
 export const sleep = v => new Promise(res => setTimeout(res, v))

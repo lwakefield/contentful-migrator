@@ -19,6 +19,7 @@ export function log(str, level = 'info') {
     const tag = tags[level]
     if (!tag) throw new Error(`Invalid log level: ${level}`)
 
+    // eslint-disable-next-line no-console
     process.env.DEBUG && console.log(`${tag}: ${str}`)
 }
 
@@ -27,8 +28,8 @@ export const debug = str => log(str, 'debug')
 export const error = str => log(str, 'error')
 
 export function arrayToObj(arr = [], fn) {
-  return arr.reduce(
-    (acc, val) => ({...acc, ...fn(val)}),
-    {}
-  )
+    return arr.reduce(
+        (acc, val) => ({...acc, ...fn(val)}),
+        {}
+    )
 }

@@ -2,7 +2,6 @@ if (!global._babelPolyfill) require('babel-polyfill')
 
 import MigrationChain from './chain'
 import Space from './space'
-import {MIGRATIONS_ID, DEFAULT_LOCALE, TEMPLATE_STR} from './constants'
 import {info} from './util'
 
 export default class Migrator {
