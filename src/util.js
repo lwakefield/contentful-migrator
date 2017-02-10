@@ -8,7 +8,7 @@ export const cp = (from, to, args = '') =>
     execSync(`cp ${args} ${from} ${to} `)
 export const rm = (path, args = '') =>
     execSync(`rm ${args} ${path}`)
-export const randStr = len => crypto.randomBytes(len / 2).toString('hex')
+export const randStr = len => randomBytes(len / 2).toString('hex')
 
 export function log(str, level = 'info') {
     const tags = {
