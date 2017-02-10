@@ -45,6 +45,7 @@ describe('Migrator', () => {
         const thirdMigration = migrator.migrationChain.migrations[2]
         await migrator.upgradeTo(thirdMigration.id)
 
+        await migrator.downgradeTo()
         // TODO make some assertions here...
 
         await cleanSpace(SPACE)

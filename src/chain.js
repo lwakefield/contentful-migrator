@@ -57,6 +57,9 @@ export default class MigrationChain {
     first () {
         return this.migrations[0] || null
     }
+    last () {
+        return this.migrations[this.migrations.length - 1] || null
+    }
     find (id) {
         return this.migrations.find(v => v.id === id) || null
     }
@@ -83,7 +86,11 @@ export class Migration {
         this.revisesId   = isNully(revisesMatch) ? null: revisesMatch
     }
 
-    runUp (space) {
+    up (space) {
         return require(this.path).up(space)
+    }
+
+    down (space) {
+        return require(this.path).down(space)
     }
 }

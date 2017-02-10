@@ -37,31 +37,51 @@ export class Migrator {
         let isDone = !migration
         while (!isDone) {
             info(`running upgrade: ${migration.id}`)
-            await migration.runUp(this.space.space)
+            await migration.up(this.space.space)
             await this.space.addHead(migration.id)
             isDone = migration.id === revisionId || !migration.revisedBy
             migration = migration.revisedBy
         }
     }
 
+    // Downgrade to and including, this means the head will be set to the
+    // migration prior to revisionId
     async downgradeTo (revisionId) {
-        const migrationHistory = await getMigrationHistory(this.space)
-        const getId = entry => entry.fields.ref[DEFAULT_LOCALE]
+        const remoteHeadRef = this.space.getHeadRef()
+        info(`Remote head is at ${remoteHeadRef}`)
 
-        let head = migrationHistory[0]
+        // Get the next migration to run
+        let migration = !remoteHeadRef ?
+            this.migrationChain.last() :
+            this.migrationChain.find(remoteHeadRef)
 
-        const firstIndex = this.getMigrationIndex(getId(head))
-        const lastIndex = this.getMigrationIndex(revisionId) || 0
-
-        for (let i = firstIndex; i >= lastIndex; i--) {
-            const id = this.migrations[i].id
-            info(`running downgrade: ${id}`)
-            const migration = this.loadMigration(id)
-            await migration.down(this.space)
-
-            head = migrationHistory.shift()
-            await head.delete()
+        let isDone = !migration
+        while (!isDone) {
+            info(`running downgrade: ${migration.id}`)
+            await migration.down(this.space.space)
+            await this.space.deleteHead()
+            isDone = migration.id === revisionId || !migration.revises
+            migration = migration.revises
         }
+
+
+//         const migrationHistory = await getMigrationHistory(this.space)
+//         const getId = entry => entry.fields.ref[DEFAULT_LOCALE]
+
+//         let head = migrationHistory[0]
+
+//         const firstIndex = this.getMigrationIndex(getId(head))
+//         const lastIndex = this.getMigrationIndex(revisionId) || 0
+
+//         for (let i = firstIndex; i >= lastIndex; i--) {
+//             const id = this.migrations[i].id
+//             info(`running downgrade: ${id}`)
+//             const migration = this.loadMigration(id)
+//             await migration.down(this.space)
+
+//             head = migrationHistory.shift()
+//             await head.delete()
+//         }
     }
 
 }

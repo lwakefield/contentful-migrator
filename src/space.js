@@ -51,6 +51,11 @@ export default class Space {
         this.migrations.push(migration)
     }
 
+    async deleteHead () {
+        const head = this.migrations.shift()
+        await head.delete()
+    }
+
     getHeadRef () {
         const last = this.migrations[this.migrations.length - 1]
         return last ? last.fields.ref[DEFAULT_LOCALE] : null
