@@ -25,3 +25,10 @@ export function log(str, level = 'info') {
 export const info = str => log(str, 'info')
 export const debug = str => log(str, 'debug')
 export const error = str => log(str, 'error')
+
+export function arrayToObj(arr = [], fn) {
+  return arr.reduce(
+    (acc, val) => ({...acc, ...fn(val)}),
+    {}
+  )
+}
