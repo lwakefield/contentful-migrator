@@ -29,7 +29,7 @@ export default class Space {
     async loadMigrationHistory () {
         this.migrations = await enumerate(
             this.space.getEntries,
-            {content_type: MIGRATIONS_ID, order: '-sys.createdAt'}
+            {content_type: MIGRATIONS_ID, order: 'sys.createdAt'}
         )
     }
 
@@ -40,11 +40,24 @@ export default class Space {
                 {name: 'ref', id: 'ref', type: 'Symbol'}
             ]}
         )
-        return await contentType.publish()
+        await contentType.publish()
+    }
+
+    async addHead (id) {
+        const migration = await this.space.createEntry(
+            MIGRATIONS_ID,
+            {fields: {ref: {[DEFAULT_LOCALE]: id}}}
+        )
+        this.migrations.push(migration)
+    }
+
+    getHeadRef () {
+        const last = this.migrations[this.migrations.length - 1]
+        return last ? last.fields.ref[DEFAULT_LOCALE] : null
     }
 }
 
-async function enumerate (fn, query = {}) {
+export async function enumerate (fn, query = {}) {
     const limit = 1000
     const entries = []
     let isDone = false

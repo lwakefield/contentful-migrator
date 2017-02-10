@@ -1,43 +1,47 @@
 if (!global._babelPolyfill) require('babel-polyfill')
 
-import {ls, randStr, info} from './util'
 import {readFileSync, writeFileSync} from 'fs'
 import contentful from 'contentful-management'
 
-const TEMPLATE = readFileSync(`${__dirname}/template.js`).toString()
-export const MIGRATIONS_ID = '__migrations'
-export const DEFAULT_LOCALE = 'en-US'
+import {ls, randStr, info} from './util'
+import Space from './space'
+import MigrationChain from './chain'
+import {MIGRATIONS_ID, DEFAULT_LOCALE, TEMPLATE_STR} from './constants'
 
 // TODO: terminology, define the difference b/w a migration and a revision
-
-export const getClient = accessToken => contentful.createClient({accessToken})
-export const getSpace = (spaceId, accessToken) =>
-    getClient(accessToken).getSpace(spaceId)
-
 export class Migrator {
-    constructor (space, dir) {
+    constructor (space, migrationChain) {
         this.space = space
-        this.dir = dir
-        this.migrations = loadRevisionChain(dir)
+        this.migrationChain = migrationChain
+    }
+
+    static async get(spaceId, dir, accessToken) {
+        const space = await Space.get(spaceId, accessToken)
+        const migrationChain = new MigrationChain(dir)
+        return new Migrator(space, migrationChain)
     }
 
     // Upgrade to and including
     // TODO: how do you handle a migration failing half way?
     async upgradeTo(revisionId) {
-        const remoteHead = getSpaceHead(this.space)
-        const firstIndex = this.getMigrationIndex(remoteHead) || -1
-        const lastIndex = this.getMigrationIndex(revisionId) ||
-            this.migrations.length - 1
+        const remoteHeadRef = this.space.getHeadRef()
+        info(`Remote head is at ${remoteHeadRef}`)
 
-        for (let i = firstIndex + 1; i <= lastIndex; i++) {
-            const id = this.migrations[i].id
-            info(`running upgrade: ${id}`)
-            const migration = this.loadMigration(id)
-            await migration.up(this.space)
-            await this.space.createEntry(
-                MIGRATIONS_ID,
-                {fields: {ref: {[DEFAULT_LOCALE]: id}}}
-            )}
+        // Get the next migration to run
+        let migration = !remoteHeadRef ?
+            this.migrationChain.first() :
+            this.migrationChain.find(remoteHeadRef).revisedBy
+
+        // TODO: if head is past revisionId, then it will run ALL migrations
+
+        let isDone = !migration
+        while (!isDone) {
+            info(`running upgrade: ${migration.id}`)
+            await migration.runUp(this.space.space)
+            await this.space.addHead(migration.id)
+            isDone = migration.id === revisionId || !migration.revisedBy
+            migration = migration.revisedBy
+        }
     }
 
     async downgradeTo (revisionId) {
@@ -60,124 +64,4 @@ export class Migrator {
         }
     }
 
-    loadMigration(id) {
-        const migration = this.migrations.find(v => v.id === id)
-        if (!migration) throw new Error('Migration not found')
-
-        return require(migration.path)
-    }
-
-    getMigration (id) {
-        return this.migrations.find(v => v.id === id) || null
-    }
-
-    getMigrationIndex (id) {
-        const index = this.migrations.findIndex(v => v.id === id)
-        return index !== -1 ? index : null
-    }
-}
-
-export async function paginate(fn, query = {}) {
-    const limit = 1000
-    const entries = []
-    let isDone = false
-    while (!isDone) {
-        const page = await fn({...query, skip: entries.length, limit})
-        const items = page.items || []
-        entries.push(...items)
-        isDone = !items.length
-    }
-    return entries
-}
-
-export async function getMigrationHistory(space) {
-    return await paginate(
-        space.getEntries,
-        {content_type: MIGRATIONS_ID, order: '-sys.createdAt'}
-    )
-}
-
-export async function getSpaceHead(space) {
-    const page = await space.getEntries({
-        content_type: MIGRATIONS_ID,
-        order: '-sys.createdAt',
-        limit: 1
-    })
-    const items = (page.items || [])
-    return items.length ?
-        items[0].fields.ref[DEFAULT_LOCALE] :
-        null
-}
-
-export async function getMigrations (space) {
-    return await paginate(
-        space.getEntries,
-        {content_type: MIGRATIONS_ID, order: 'sys.createdAt'}
-    )
-}
-
-export async function prepareSpace (space) {
-    try {
-        const migrations = await space.getContentType(MIGRATIONS_ID)
-        info(`${MIGRATIONS_ID} content type already exists`)
-        return migrations
-    } catch (e) {}
-
-    info(`${MIGRATIONS_ID} content type does not exist.`)
-    info(`creating ${MIGRATIONS_ID} content type`)
-
-
-    return await space.createContentTypeWithId(
-        MIGRATIONS_ID,
-        {name: 'Migrations', fields: [
-            {name: 'ref', id: 'ref', type: 'Symbol'}
-        ]}
-    ).then(v => v.publish())
-}
-
-export function createMigration (path, name = '') {
-    const revisionChain = loadRevisionChain(path)
-    const head = revisionChain[revisionChain.length - 1]
-    const id = randStr(8)
-    const src = TEMPLATE
-        .replace('<ID>', id)
-        .replace('<REVISES>', head.id)
-
-    const filename = name ?
-        `${path}/${id}_${name}.js` :
-        `${path}/${id}.js`
-
-    writeFileSync(filename, src)
-    return filename
-}
-
-export function loadRevisionChain (dir) {
-    const paths = ls(`${dir}/*.js`)
-
-    const revisionHash = {}
-    for (const path of paths) {
-        const content = readFileSync(path).toString()
-        let [, revised_by] = content.match(/\* revised_by: (\w+)/)
-        const [, id] = content.match(/\* id: (\w+)/)
-        let [, revises] = content.match(/\* revises: (\w+)/)
-        if (revised_by === 'null') revised_by = null
-        if (revises === 'null') revises = null
-
-        revisionHash[id] = {revised_by, id, revises, path}
-    }
-
-    // TODO: this could do with some tidying to make sure we don't leave any
-    // hanging revisions...
-
-    let node = revisionHash[Object.keys(revisionHash)[0]]
-    while (node.revises) node = revisionHash[node.revises]
-
-    let revisionChain = []
-
-    while (node) {
-        revisionChain.push(node)
-        node = revisionHash[node.revised_by]
-    }
-
-    return revisionChain
 }

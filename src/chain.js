@@ -54,6 +54,12 @@ export default class MigrationChain {
         this.link()
         return migration
     }
+    first () {
+        return this.migrations[0] || null
+    }
+    find (id) {
+        return this.migrations.find(v => v.id === id) || null
+    }
 }
 
 export class Migration {
@@ -75,5 +81,9 @@ export class Migration {
         this.revisedById = isNully(revisedByMatch) ? null: revisedByMatch
         this.id          = isNully(idMatch) ? null: idMatch
         this.revisesId   = isNully(revisesMatch) ? null: revisesMatch
+    }
+
+    runUp (space) {
+        return require(this.path).up(space)
     }
 }
