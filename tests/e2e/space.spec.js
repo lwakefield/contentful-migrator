@@ -1,22 +1,16 @@
-require('dotenv').config()
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-import {ls, cp, rm, randStr} from '../../src/util'
-import {tmpdir} from 'os'
-import fs from 'fs'
-import contentful from 'contentful-management'
-
 import Space from '../../src/space'
-import {spy, unspy, cleanSpace} from '../util'
+import {spy, unspy, setupSpace, cleanSpace, sleep} from '../util'
 
 let SPACE
 let SPACE_ID
+
 beforeAll(async () => {
-    const client = contentful.createClient(
-        {accessToken: process.env.CONTENTFUL_ACCESS_TOKEN}
-    )
-    SPACE = await client.getSpace(process.env.CONTENTFUL_SPACE_ID)
-    SPACE_ID = process.env.CONTENTFUL_SPACE_ID
+    [SPACE, SPACE_ID] = await setupSpace()
+})
+afterEach(async () => {
+    await cleanSpace(SPACE)
 })
 
 describe('Space', () => {
@@ -42,7 +36,5 @@ describe('Space', () => {
         expect(space.space).toBeTruthy()
 
         unspy(Space.prototype, ['loadMigrationHistory', 'initSpace'])
-
-        await cleanSpace(SPACE)
     })
 })

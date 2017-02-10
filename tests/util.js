@@ -31,6 +31,12 @@ export async function cleanSpace (space) {
             await contentType.delete()
         }
     }
+
+    await sleep(2000)
+    const res = await enumerate(space.getContentTypes)
+    if (res.length) {
+        error('Did not clean up correctly...')
+    }
 }
 
 export async function cleanContentType (space, contentType) {

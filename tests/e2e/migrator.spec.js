@@ -12,16 +12,12 @@ import {
 const FIXTURE_PATH = `${__dirname}/../fixtures`
 let SPACE
 let SPACE_ID
+
 beforeAll(async () => {
     [SPACE, SPACE_ID] = await setupSpace()
 })
 afterEach(async () => {
     await cleanSpace(SPACE)
-    await sleep(2000)
-    const res = await enumerate(SPACE.getContentTypes)
-    if (res.length) {
-        error('Did not clean up correctly...')
-    }
 })
 
 describe('Migrator', () => {
