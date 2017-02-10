@@ -1,14 +1,10 @@
 if (!global._babelPolyfill) require('babel-polyfill')
 
-import {readFileSync, writeFileSync} from 'fs'
-import contentful from 'contentful-management'
-
-import {ls, randStr, info} from './util'
-import Space from './space'
 import MigrationChain from './chain'
+import Space from './space'
 import {MIGRATIONS_ID, DEFAULT_LOCALE, TEMPLATE_STR} from './constants'
+import {info} from './util'
 
-// TODO: terminology, define the difference b/w a migration and a revision
 export class Migrator {
     constructor (space, migrationChain) {
         this.space = space
@@ -63,25 +59,6 @@ export class Migrator {
             isDone = migration.id === revisionId || !migration.revises
             migration = migration.revises
         }
-
-
-//         const migrationHistory = await getMigrationHistory(this.space)
-//         const getId = entry => entry.fields.ref[DEFAULT_LOCALE]
-
-//         let head = migrationHistory[0]
-
-//         const firstIndex = this.getMigrationIndex(getId(head))
-//         const lastIndex = this.getMigrationIndex(revisionId) || 0
-
-//         for (let i = firstIndex; i >= lastIndex; i--) {
-//             const id = this.migrations[i].id
-//             info(`running downgrade: ${id}`)
-//             const migration = this.loadMigration(id)
-//             await migration.down(this.space)
-
-//             head = migrationHistory.shift()
-//             await head.delete()
-//         }
     }
 
 }
