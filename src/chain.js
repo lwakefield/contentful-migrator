@@ -10,7 +10,12 @@ export default class MigrationChain {
     }
     load () {
         const paths = ls(`${this.dir}/*.js`)
-        const migrations = paths.map(v => new Migration(v))
+        const migrations = paths.map(v => new Migration(v)).filter(v => !!v.id)
+
+        if (!migrations.length) {
+            this.migrations = []
+            return
+        }
 
         const migrationMap = arrayToObj(
             migrations,
@@ -48,6 +53,15 @@ export default class MigrationChain {
 
         writeFileSync(filename, src)
 
+        // Update the old head to reference the new head
+        if (head) {
+            const headContent = readFileSync(head.path).toString()
+            writeFileSync(
+                head.path,
+                headContent.replace('revised_by: null', `revised_by: ${id}`)
+            )
+        }
+
         const migration = new Migration(filename)
         this.migrations.push(migration)
         this.link()
@@ -74,9 +88,9 @@ export class Migration {
 
     load () {
         const content = readFileSync(this.path).toString()
-        const [, revisedByMatch] = content.match(/\* revised_by: (\w+)/)
-        const [, idMatch]        = content.match(/\* id: (\w+)/)
-        const [, revisesMatch]   = content.match(/\* revises: (\w+)/)
+        const [, idMatch]        = content.match(/\* id: (\w+)/) || []
+        const [, revisedByMatch] = content.match(/\* revised_by: (\w+)/) || []
+        const [, revisesMatch]   = content.match(/\* revises: (\w+)/) || []
 
         const isNully = v => !v || v === 'null'
 
