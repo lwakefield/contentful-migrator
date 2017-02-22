@@ -45,6 +45,13 @@ export default class Migrator {
         const remoteHeadRef = this.space.getHeadRef()
         info(`Remote head is at ${remoteHeadRef}`)
 
+        if (!revisionId) {
+            info(`running downgrade: ${migration.id}`)
+            await migration.down(this.space.space)
+            await this.space.deleteHead()
+            return
+        }
+
         // Get the next migration to run
         let migration = !remoteHeadRef ?
             this.migrationChain.last() :
@@ -59,5 +66,4 @@ export default class Migrator {
             migration = migration.revises
         }
     }
-
 }

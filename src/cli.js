@@ -27,11 +27,14 @@ function argparse (args = process.argv.slice(2)) {
     return result
 }
 
-const {CONTENTFUL_SPACE_ID, CONTENTFUL_ACCESS_TOKEN} = process.env
-process.env.DEBUG = true
-
 const args = argparse()
 const program = (args._ || [])[0]
+const {
+    CONTENTFUL_SPACE_ID = args['space-id'],
+    CONTENTFUL_ACCESS_TOKEN = args['access-token']
+} = process.env
+process.env.DEBUG = true
+
 
 if (program === 'create') {
     const chain = new Chain(process.cwd())
@@ -50,4 +53,14 @@ if (program === 'create') {
         process.cwd(),
         CONTENTFUL_ACCESS_TOKEN
     ).then(migrator => migrator.downgradeTo(args._[1]))
+} else if (args.help || args.h || !args._){
+    /* eslint-disable no-console */
+    console.log('usage: contentful-migrator [up|down|create]')
+    console.log('  up [ref]:      updates contentful to and including `ref`')
+    console.log('                 ref is optional, defaults to the local head')
+    console.log('  create [name]: creates a new contentful migration w/ `name`')
+    console.log('                 name is optional')
+    console.log('  down [ref]:    downgrades contentful to and including ref')
+    console.log('                 ref is optional, defaults to the remote head^')
+    /* eslint-enable no-console */
 }
