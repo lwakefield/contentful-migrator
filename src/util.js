@@ -20,7 +20,7 @@ export function log(str, level = 'info') {
     if (!tag) throw new Error(`Invalid log level: ${level}`)
 
     // eslint-disable-next-line no-console
-    process.env.DEBUG && console.log(`${tag}: ${str}`)
+    console.log(`${tag}: ${str}`)
 }
 
 export const info = str => log(str, 'info')

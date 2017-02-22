@@ -1,8 +1,13 @@
 {
   "name": "contentful-migrator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A migration tool for contentful",
+  "author": "Lawrence Wakefield",
+  "license": "ISC",
+  "main": "src/index.js",
+  "bin": {
+    "contentful-migrator": "bin/index.js"
+  },
   "directories": {
     "test": "test"
   },
@@ -13,16 +18,19 @@
     "jest": "^18.1.0"
   },
   "devDependencies": {
+    "babel-loader": "^6.2.10",
+    "babel-plugin-transform-regenerator": "^6.22.0",
     "babel-polyfill": "^6.22.0",
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-stage-3": "^6.22.0",
+    "babel-regenerator-runtime": "^6.5.0",
     "eslint": "^3.15.0",
     "eslint-plugin-jest": "^1.0.2",
-    "jest": "^18.1.0"
+    "jest": "^18.1.0",
+    "raw-loader": "^0.5.1",
+    "webpack": "^2.2.1"
   },
   "scripts": {
     "test": "jest -i tests/**"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }
